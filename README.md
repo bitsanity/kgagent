@@ -43,6 +43,3 @@ authenticate the service to the the user.
 - For generating and processing JSON
 - github.com/fangyidong/json-simple
 
-** hsqldb **
-- http://hsqldb.org/
-- http://hsqldb.org/web/hsqlLicense.html
