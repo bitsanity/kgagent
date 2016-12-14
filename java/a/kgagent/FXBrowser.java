@@ -164,6 +164,8 @@ public class FXBrowser extends Application
                         }
                         catch( Exception e ) { }
                       }
+
+                      urlField_.setText( path );
                     }
 
                     loadFrom( path );
@@ -213,7 +215,12 @@ public class FXBrowser extends Application
                       HTMLInputElement tfield =
                         (HTMLInputElement)doc.getElementById(
                           "kgagent.response" );
-                      String respb64 = tfield.getValue();
+
+                      // copy/paste from email tends to insert hard-to-spot
+                      // space in the middle. Space is not in B64 set.
+
+                      String respb64 =
+                        tfield.getValue().replaceAll(" ","");
 
                       //send response
                       try
