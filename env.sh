@@ -1,7 +1,7 @@
 # some reusable definitions for inclusion in build run and test
 # scripts
 
-JLIB=-Djava.library.path=./lib
+JLIB=-Djava.library.path=./lib:/home/skull/secp256k1/.libs
 
 JARS=\
 ./lib/hsqldb.jar:\

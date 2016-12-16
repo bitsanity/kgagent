@@ -2,11 +2,9 @@ package a.kgagent.util;
 
 public class Secp256k1
 {
-  // expect libkeymaster.so includes libsecp256k1.so all x-compiled for
-  // correct target architecture
   static
   {
-    System.load( "/home/skull/secp256k1/.libs/libsecp256k1.so" );
+    System.loadLibrary( "secp256k1" );
     System.loadLibrary( "kgagent" );
   }
 
