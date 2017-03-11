@@ -118,14 +118,16 @@ public class KGProtocolHandler
     if (null == sess)
       throw new Exception( "no session for " + url.toString() );
 
-    // sign outgoing message with agent's key
-    Secp256k1 curve = new Secp256k1();
-
     byte[] msg = url.getURI().getBytes();
-    byte[] sig = curve.signECDSA( SHA256.hash(msg), sess.a_ );
+    ECIES ec = new ECIES( sess.a_, sess.G_ );
+    String msg64 = ec.encrypt( msg );
+
+    // sign outgoing b64-message with agent's key
+    Secp256k1 curve = new Secp256k1();
+    byte[] sig = curve.signECDSA( SHA256.hash(msg64.getBytes()), sess.a_ );
 
     JSONObject soleparam = new JSONObject();
-    soleparam.put( "req", Base64.encode(msg) );
+    soleparam.put( "req", msg64 );
     soleparam.put( "sig", Base64.encode(sig) );
 
     JSONArray parms = new JSONArray();
@@ -165,16 +167,20 @@ public class KGProtocolHandler
 
     JSONObject res = (JSONObject) reply.get( "result" );
     String rspb64 = (String) res.get( "rsp" );
-    byte[] rspraw = Base64.decode( rspb64 );
     byte[] sigraw = Base64.decode( (String)res.get("sig") );
 
     // always check the signature
 
     Secp256k1 curve = new Secp256k1();
-    if (!curve.verifyECDSA( sigraw, SHA256.hash(rspraw), sess.G_ ))
+    if (!curve.verifyECDSA( sigraw, SHA256.hash(rspb64.getBytes()), sess.G_ ))
       throw new Exception( "Invalid signature from gatekeeper" );
 
-    return new String( rspraw );
+    // decrypt
+
+    ECIES ec = new ECIES( sess.a_, sess.G_ );
+    byte[] msg = ec.decrypt( rspb64 );
+
+    return new String( msg, "UTF-8" );
   }
 
   private JSONObject doRPC( KGURL url, JSONObject json ) throws Exception
@@ -191,13 +197,8 @@ public class KGProtocolHandler
                             new InputStreamReader(s.getInputStream()) );
 
       // handshake
-System.out.println( "OUT: " + json.toJSONString() );
       pw.println( json.toJSONString() );
-
-System.out.println( "Starting read..." );
-
       String rsp = br.readLine();
-System.out.println( "IN: " + rsp );
 
       JSONParser parser = new JSONParser();
       fromServer = (JSONObject) parser.parse( rsp );

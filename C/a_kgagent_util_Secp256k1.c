@@ -97,6 +97,53 @@ JNIEXPORT jbyteArray JNICALL Java_a_kgagent_util_Secp256k1_publicKeyCreate
   return result;
 }
 
+// -----------------------------------------------------------
+//  byte[] publicKeyMult( byte[] in_pubkey, byte[] in_tweak );
+// -----------------------------------------------------------
+
+JNIEXPORT jbyteArray JNICALL Java_a_kgagent_util_Secp256k1_publicKeyMult
+  ( JNIEnv * env, jobject obj, jbyteArray in_pubkey, jbyteArray in_tweak )
+{
+  // java to C
+  jbyte* jkey = (*env)->GetByteArrayElements( env, in_pubkey, NULL );
+  jsize len = (*env)->GetArrayLength( env, in_pubkey );
+  if ( NULL == jkey || (jsize)PUBKEYSZ != len ) return NULL;
+  unsigned char * pubkeybytes = (unsigned char *)jkey;
+
+  // deserialize public key
+
+  secp256k1_pubkey pubkey;
+  if ( 1 != secp256k1_ec_pubkey_parse(pCONTEXT, &pubkey, pubkeybytes, PUBKEYSZ) )
+    return NULL;
+
+  jbyte* jtweak = (*env)->GetByteArrayElements( env, in_tweak, NULL );
+  len = (*env)->GetArrayLength( env, in_tweak );
+  if (NULL == jtweak || (jsize)TWKSIZE != len) return NULL;
+  unsigned char * tweakbytes = (unsigned char *)jtweak;
+
+  // operation
+
+  if (1 != secp256k1_ec_pubkey_tweak_mul(pCONTEXT, &pubkey, tweakbytes) ) return NULL;
+
+  // convert result from opaque to serial pubkey
+
+  unsigned char serialPubKey[ PUBKEYSZ ];
+  size_t outLen = PUBKEYSZ;
+  unsigned int compressed = SECP256K1_EC_COMPRESSED;
+
+  (void)secp256k1_ec_pubkey_serialize( pCONTEXT,
+                                       (unsigned char *)serialPubKey,
+                                       &outLen,
+                                       &pubkey,
+                                       compressed );
+
+  jbyteArray result = (*env)->NewByteArray( env, PUBKEYSZ );
+  if (NULL != result)
+    (*env)->SetByteArrayRegion( env, result, 0, PUBKEYSZ, serialPubKey );
+
+  return result;
+}
+
 // ------------------------------------------------------
 //  byte[] signECDSA( byte[] hash32, byte[] in_seckey );
 // ------------------------------------------------------

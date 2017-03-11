@@ -21,6 +21,9 @@ public class Secp256k1
 
   public native byte[] publicKeyCreate( byte[] in_seckey );
 
+  // Q * N
+  public native byte[] publicKeyMult( byte[] in_pubkey, byte[] in_tweak );
+
   public native byte[] signECDSA( byte[] hash32, byte[] in_seckey );
 
   public native boolean
